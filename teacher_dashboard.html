@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        .rectangle-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .rectangle {
+            width: 150px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .rectangle i {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .rectangle:hover {
+            transform: scale(1.1);
+        }
+
+        .attendance-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .logout {
+            margin-top: 20px;
+            background-color: red;
+        }
+    </style>
+    <script>
+        let currentPage = "departments";
+
+        // Example student data for each department and year
+        const studentData = {
+            "CSE": {
+                "1st Year": [
+                    { id: "821023104001", name: "John Doe" },
+                    { id: "821023104002", name: "Jane Smith" }
+                ],
+                "2nd Year": [
+                { id: "821023104001", name: "Abin Raj A" },
+                { id: "821023104002", name: "Akalya D" },
+                { id: "821023104003", name: "Anandhan V" },
+                { id: "821023104004", name: "Anisha A" },
+                { id: "821023104005", name: "Arjunan S" },
+                { id: "821023104006", name: "Ashwin R" },
+                { id: "821023104007", name: "Ayyappan M" },
+                { id: "821023104008", name: "Balamurugan K" },
+                { id: "821023104009", name: "Baranidharan S" },
+                { id: "821023104010", name: "Hariharan D" },
+                { id: "821023104011", name: "Jaya Kumar S" },
+                { id: "821023104012", name: "Kamalesh K" },
+                { id: "821023104013", name: "Karthika M" },
+                { id: "821023104014", name: "Kiruthika B" },
+                { id: "821023104015", name: "Lingam K" },
+                { id: "821023104016", name: "Malavika T" },
+                { id: "821023104017", name: "Manikannan K" },
+                { id: "821023104018", name: "Meeravathi S" },
+                { id: "821023104019", name: "Mohamed Jiyavudeen S" },
+                { id: "821023104020", name: "Monika P" },
+                { id: "821023104021", name: "Mullaivanan S" },
+                { id: "821023104022", name: "Prabhu K" },
+                { id: "821023104023", name: "Prakash T" },
+                { id: "821023104024", name: "Prem S" },
+                { id: "821023104025", name: "Rafeek Ahamed A" },
+                { id: "821023104026", name: "Raiyan M" },
+                { id: "821023104027", name: "Rashya G" },
+                { id: "821023104028", name: "Sabari Nathan S" },
+                { id: "821023104029", name: "Sandhiya R" },
+                { id: "821023104030", name: "Santhosh C" },
+                { id: "821023104031", name: "Santhosh M" },
+                { id: "821023104032", name: "Santhoshkumar U" },
+                { id: "821023104033", name: "Saranya M" },
+                { id: "821023104034", name: "Shalini V" },
+                { id: "821023104035", name: "Sindhuja D" },
+                { id: "821023104036", name: "Sivanesan M" },
+                { id: "821023104037", name: "Sriraam J" },
+                { id: "821023104038", name: "Stalin P" },
+                { id: "821023104039", name: "Surya R" },
+                { id: "821023104040", name: "Swathy V" },
+                { id: "821023104041", name: "Swetha S" },
+                { id: "821023104042", name: "Tamilselvan R" },
+                { id: "821023104043", name: "Vijay Amalan S" },
+                { id: "821023104044", name: "Vijithnikson R" },
+                { id: "821023104302", name: "Niyas Ahamed M" },
+                { id: "821023104303", name: "Sanjay D" },
+                { id: "821023104304", name: "Santhosh M" },
+                { id: "821023104305", name: "Sindhumathi S" },
+                { id: "821023104306", name: "Swetha T" },
+                { id: "821023104301", name: "Manoj B" }
+        
+            
+                    // Add more students
+                ]
+            },
+            "ECE": {
+                "1st Year": [
+                    { id: "821023204001", name: "Kavya R" },
+                    { id: "821023204002", name: "Vinoth V" }
+                    // Add more students
+                ],
+                "2nd Year": [
+                    { id: "821023204001", name: "Gokul K" },
+                    { id: "821023204002", name: "Shalini A" }
+                    // Add more students
+                ]
+            },
+            "AI & DS": {
+                "1st Year": [
+                    { id: "821023305001", name: "Dinesh P" },
+                    { id: "821023305002", name: "Ananya R" }
+                    // Add more students
+                ],
+                "2nd Year": [
+                    { id: "821023305001", name: "Harini R" },
+                    { id: "821023305002", name: "Sriram V" }
+                    // Add more students
+                ]
+            },
+            "AI & ML": {
+                "1st Year": [
+                    { id: "821023406001", name: "Rajesh N" },
+                    { id: "821023406002", name: "Vidhya K" }
+                    // Add more students
+                ],
+                "2nd Year": [
+                    { id: "821023406001", name: "Krishna M" },
+                    { id: "821023406002", name: "Tanya P" }
+                    // Add more students
+                ]
+            }
+        };
+
+        function showDepartments() {
+            currentPage = "departments";
+            document.getElementById("department-section").style.display = "block";
+            document.getElementById("year-section").style.display = "none";
+            document.getElementById("attendance-section").style.display = "none";
+        }
+
+        function loadYears(department) {
+            currentPage = "years";
+            document.getElementById("department-section").style.display = "none";
+            document.getElementById("year-section").style.display = "block";
+            document.getElementById("attendance-section").style.display = "none";
+            document.getElementById("selected-department").innerText = department;
+        }
+
+        function loadAttendance(year, department) {
+            currentPage = "attendance";
+            document.getElementById("department-section").style.display = "none";
+            document.getElementById("year-section").style.display = "none";
+            document.getElementById("attendance-section").style.display = "block";
+            document.getElementById("selected-year").innerText = year;
+            document.getElementById("selected-department").innerText = department;
+
+            const students = studentData[department][year];
+            let studentRows = '';
+            students.forEach((student, index) => {
+                studentRows += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${student.name} - ${student.id}</td>
+                        <td><button class="btn" onclick="toggleAttendance(this)">Present</button></td>
+                    </tr>
+                `;
+            });
+            document.getElementById("student-list").innerHTML = studentRows;
+        }
+
+        function toggleAttendance(button) {
+            if (button.textContent === "Present") {
+                button.textContent = "Absent";
+                button.style.backgroundColor = "red";
+            } else {
+                button.textContent = "Present";
+                button.style.backgroundColor = "green";
+            }
+        }
+
+        function submitAttendance() {
+            // Here, instead of alert, you should save data to Firebase Firestore
+            alert("Attendance Submitted!");
+            showDepartments();
+        }
+
+        function logout() {
+            alert("Logged Out!");
+            showDepartments();
+        }
+    </script>
+</head>
+<body onload="showDepartments()">
+    <div class="container">
+        <h1>Teacher Dashboard</h1>
+
+        <!-- Department Section -->
+        <div id="department-section">
+            <h2>Select Department</h2>
+            <div class="rectangle-container">
+                <div class="rectangle" onclick="loadYears('CSE')">
+                    <i class="fas fa-laptop-code"></i>
+                    CSE
+                </div>
+                <div class="rectangle" onclick="loadYears('ECE')">
+                    <i class="fas fa-microchip"></i>
+                    ECE
+                </div>
+                <div class="rectangle" onclick="loadYears('AI & DS')">
+                    <i class="fas fa-brain"></i>
+                    AI & DS
+                </div>
+                <div class="rectangle" onclick="loadYears('AI & ML')">
+                    <i class="fas fa-robot"></i>
+                    AI & ML
+                </div>
+            </div>
+        </div>
+
+        <!-- Year Section -->
+        <div id="year-section" style="display: none;">
+            <h2>Department: <span id="selected-department"></span></h2>
+            <h3>Select Year</h3>
+            <div class="rectangle-container">
+                <div class="rectangle" onclick="loadAttendance('1st Year', document.getElementById('selected-department').innerText)">1st Year</div>
+                <div class="rectangle" onclick="loadAttendance('2nd Year', document.getElementById('selected-department').innerText)">2nd Year</div>
+            </div>
+        </div>
+
+        <!-- Attendance Section -->
+        <div id="attendance-section" style="display: none;">
+            <h2>Department: <span id="selected-department"></span> | Year: <span id="selected-year"></span></h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student Name - ID</th>
+                        <th>Attendance</th>
+                    </tr>
+                </thead>
+                <tbody id="student-list">
+                    <!-- Student rows will be populated here dynamically -->
+                </tbody>
+            </table>
+            <button class="btn" onclick="submitAttendance()">Submit</button>
+            <button class="btn logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</body>
+</html>

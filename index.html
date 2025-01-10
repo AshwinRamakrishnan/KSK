@@ -3,85 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance System</title>
+    <title>Login</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUcPaGdOPQtsk9YqMeDWqvNKWFu7I-F_o",
+            authDomain: "test-420914.firebaseapp.com",
+            databaseURL: "https://test-420914-default-rtdb.firebaseio.com",
+            projectId: "test-420914",
+            storageBucket: "test-420914.appspot.com",
+            messagingSenderId: "551223275238",
+            appId: "1:551223275238:web:3d883e1e3ca2473d02d527",
+            measurementId: "G-S25F8L72DH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Login function
+        const loginForm = document.getElementById("login-form");
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const email = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    alert("Login successful!");
+                    // Redirect based on user role (teacher or principal)
+                    const user = userCredential.user;
+                    // Check email and redirect to corresponding dashboard
+                    if (user.email === "ashwinkalai2k@gmail.com") {
+                        window.location.href = 'principal_dashboard.html';  // Principal Dashboard
+                    } else if (user.email === "ashwinkalai60@gmail.com") {
+                        window.location.href = 'teacher_dashboard.html';    // Teacher Dashboard
+                    } else {
+                        alert("User does not have access.");
+                    }
+                })
+                .catch((error) => {
+                    const errorMessage = error.message;
+                    alert("Login failed: " + errorMessage);
+                });
+        });
+    </script>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="login-page">
+    <div class="login-form">
         <h2>Login</h2>
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button onclick="login()">Login</button>
-        <p id="error-message"></p>
+        <form id="login-form">
+            <label for="username">Email</label>
+            <input type="email" id="username" name="username" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Login</button>
+        </form>
     </div>
-
-    <!-- Department Page -->
-    <div id="department-page" class="hidden">
-        <h2>Select Department</h2>
-        <button onclick="selectDepartment('CSE')">CSE</button>
-        <button onclick="selectDepartment('ECE')">ECE</button>
-    </div>
-
-    <!-- Year Page -->
-    <div id="year-page" class="hidden">
-        <h2>Select Year</h2>
-        <button onclick="selectYear('1st Year')">1st Year</button>
-        <button onclick="selectYear('2nd Year')">2nd Year</button>
-    </div>
-
-    <!-- Attendance Page -->
-    <div id="attendance-page" class="hidden">
-        <h2>Mark Attendance</h2>
-        <ul id="student-list"></ul>
-        <button onclick="submitAttendance()">Submit Attendance</button>
-    </div>
-<script>  // Import the necessary Firebase libraries
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-  
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDUcPaGdOPQtsk9YqMeDWqvNKWFu7I-F_o",
-      authDomain: "test-420914.firebaseapp.com",
-      databaseURL: "https://test-420914-default-rtdb.firebaseio.com",
-      projectId: "test-420914",
-      storageBucket: "test-420914.appspot.com",
-      messagingSenderId: "551223275238",
-      appId: "1:551223275238:web:3d883e1e3ca2473d02d527",
-      measurementId: "G-S25F8L72DH"
-    };
-  
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-  
-    // Login function
-    const loginForm = document.getElementById("login-form");
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const email = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-  
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          alert("Login successful!");
-          // Redirect to home.html after successful login
-          window.location.href = 'home.html';
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          alert("Login failed: " + errorMessage);
-        });
-    });
-  </script>
-    <!-- Firebase Scripts -->
-    <script src="app.js"></script>
 </body>
 </html>

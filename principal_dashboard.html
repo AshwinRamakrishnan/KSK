@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUcPaGdOPQtsk9YqMeDWqvNKWFu7I-F_o",
+            authDomain: "test-420914.firebaseapp.com",
+            databaseURL: "https://test-420914-default-rtdb.firebaseio.com",
+            projectId: "test-420914",
+            storageBucket: "test-420914.appspot.com",
+            messagingSenderId: "551223275238",
+            appId: "1:551223275238:web:3d883e1e3ca2473d02d527",
+            measurementId: "G-S25F8L72DH"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function loadAttendance(department, year, date) {
+            db.ref(`attendance/${department}/${year}/${date}`).once('value')
+                .then((snapshot) => {
+                    const attendance = snapshot.val();
+                    if (attendance) {
+                        let rows = '';
+                        attendance.forEach((student, index) => {
+                            rows += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${student.name} (${student.id})</td>
+                                    <td>${student.status}</td>
+                                </tr>
+                            `;
+                        });
+                        document.getElementById("attendance-table").innerHTML = rows;
+                    } else {
+                        document.getElementById("attendance-table").innerHTML = '<tr><td colspan="3">No Data Available</td></tr>';
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error loading attendance: ", error);
+                });
+        }
+    </script>
+</head>
+<body>
+    <h1>Principal Dashboard</h1>
+    <div class="container">
+        <label for="department">Department:</label>
+        <select id="department">
+            <option value="CSE">CSE</option>
+            <!-- Add other departments -->
+        </select>
+
+        <label for="year">Year:</label>
+        <select id="year">
+            <option value="2nd Year">2nd Year</option>
+            <!-- Add other years -->
+        </select>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date">
+
+        <button class="btn" onclick="loadAttendance(
+            document.getElementById('department').value,
+            document.getElementById('year').value,
+            document.getElementById('date').value
+        )">View Attendance</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student Name - ID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="attendance-table">
+                <!-- Attendance data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
