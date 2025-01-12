@@ -14,11 +14,15 @@
         }
         h1 {
             text-align: center;
+            color: #333;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
-            text-align: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         table {
             width: 100%;
@@ -30,6 +34,10 @@
             border: 1px solid #ddd;
             text-align: center;
         }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
         .btn {
             padding: 10px 20px;
             font-size: 14px;
@@ -39,10 +47,92 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        select, input[type="date"] {
+            padding: 10px;
+            margin: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #absence-count {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #attendance-summary {
+            margin-top: 20px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .summary-card {
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            width: 30%;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .summary-card span {
+            font-weight: bold;
+        }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <script>
+</head>
+<body>
+    <h1>Principal Dashboard</h1>
+    <div class="container">
+        <label for="department">Department:</label>
+        <select id="department">
+            <option value="CSE">CSE</option>
+            <option value="ECE">ECE</option>
+            <option value="MECH">MECH</option>
+        </select>
+
+        <label for="year">Year:</label>
+        <select id="year">
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+        </select>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date">
+
+        <button id="view-attendance-btn" class="btn">View Attendance</button>
+
+        <!-- Attendance Summary -->
+        <div id="attendance-summary">
+            <div class="summary-card" id="total-students"><span>Total Students:</span> 0</div>
+            <div class="summary-card" id="present-students"><span>Present:</span> 0</div>
+            <div class="summary-card" id="absent-students"><span>Absent:</span> 0</div>
+        </div>
+
+        <!-- Attendance Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Status</th>
+                    <th>Student ID</th>
+                </tr>
+            </thead>
+            <tbody id="attendance-table">
+                <!-- Attendance data will be loaded here -->
+            </tbody>
+        </table>
+
+        <div id="absence-count">
+            <!-- Absentees count will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDUcPaGdOPQtsk9YqMeDWqvNKWFu7I-F_o",
             authDomain: "test-420914.firebaseapp.com",
@@ -55,71 +145,94 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
 
-        function loadAttendance(department, year, date) {
-            db.ref(`attendance/${department}/${year}/${date}`).once('value')
-                .then((snapshot) => {
-                    const attendance = snapshot.val();
-                    if (attendance) {
-                        let rows = '';
-                        attendance.forEach((student, index) => {
-                            rows += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${student.name} (${student.id})</td>
-                                    <td>${student.status}</td>
-                                </tr>
-                            `;
-                        });
-                        document.getElementById("attendance-table").innerHTML = rows;
+        // Function to load attendance summary
+        function loadAttendanceSummary() {
+            const department = document.getElementById('department').value;
+            const year = document.getElementById('year').value;
+            const date = document.getElementById('date').value;
+
+            if (!date) {
+                alert("Please select a date.");
+                return;
+            }
+
+            // Reference to the attendance document for the given department, year, and date
+            const attendanceRef = doc(db, "attendance", department, year, date);
+
+            // Fetch data from Firestore
+            getDoc(attendanceRef)
+                .then((docSnap) => {
+                    const attendanceList = document.getElementById('attendance-table');
+                    const absenceCountElement = document.getElementById('absence-count');
+                    const totalStudentsElement = document.getElementById('total-students');
+                    const presentStudentsElement = document.getElementById('present-students');
+                    const absentStudentsElement = document.getElementById('absent-students');
+                    attendanceList.innerHTML = ""; // Clear previous data
+                    absenceCountElement.innerHTML = ""; // Clear previous absence count
+
+                    let totalCount = 0;
+                    let presentCount = 0;
+                    let absentCount = 0;
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        console.log("Fetched data:", data); // Log the data for debugging
+
+                        // Loop through the keys (dates)
+                        const dateData = data[date];  // Get data for the selected date
+
+                        if (dateData) {
+                            // Convert to an array and sort by studentId (roll number)
+                            const sortedData = Object.keys(dateData)
+                                .map(studentId => {
+                                    const student = dateData[studentId];
+                                    return { studentId, ...student };
+                                })
+                                .sort((a, b) => {
+                                    // Sorting by studentId (roll number)
+                                    return a.studentId.localeCompare(b.studentId); // Sort in ascending order
+                                });
+
+                            sortedData.forEach(student => {
+                                const studentName = student.name || 'N/A'; // Default to 'N/A' if name is missing
+                                const status = student.status || 'N/A';  // Default to 'N/A' if status is missing
+
+                                // Count total, present, and absent students
+                                totalCount++;
+                                if (status === 'Present') presentCount++;
+                                if (status === 'Absent') absentCount++;
+
+                                const row = document.createElement("tr");
+                                row.innerHTML = `
+                                    <td>${studentName}</td>
+                                    <td>${status}</td>
+                                    <td>${student.studentId}</td>
+                                `;
+                                attendanceList.appendChild(row);
+                            });
+
+                            // Update the summary cards
+                            totalStudentsElement.innerHTML = `<span>Total Students:</span> ${totalCount}`;
+                            presentStudentsElement.innerHTML = `<span>Present:</span> ${presentCount}`;
+                            absentStudentsElement.innerHTML = `<span>Absent:</span> ${absentCount}`;
+                        } else {
+                            attendanceList.innerHTML = "<tr><td colspan='3'>No attendance data for this date.</td></tr>";
+                        }
                     } else {
-                        document.getElementById("attendance-table").innerHTML = '<tr><td colspan="3">No Data Available</td></tr>';
+                        attendanceList.innerHTML = "<tr><td colspan='3'>No attendance data for this date.</td></tr>";
                     }
                 })
                 .catch((error) => {
-                    console.error("Error loading attendance: ", error);
+                    console.error("Error loading attendance data:", error);
                 });
         }
+
+        // Attach event listener for the button
+        document.getElementById("view-attendance-btn").addEventListener("click", loadAttendanceSummary);
     </script>
-</head>
-<body>
-    <h1>Principal Dashboard</h1>
-    <div class="container">
-        <label for="department">Department:</label>
-        <select id="department">
-            <option value="CSE">CSE</option>
-            <!-- Add other departments -->
-        </select>
-
-        <label for="year">Year:</label>
-        <select id="year">
-            <option value="2nd Year">2nd Year</option>
-            <!-- Add other years -->
-        </select>
-
-        <label for="date">Date:</label>
-        <input type="date" id="date">
-
-        <button class="btn" onclick="loadAttendance(
-            document.getElementById('department').value,
-            document.getElementById('year').value,
-            document.getElementById('date').value
-        )">View Attendance</button>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Student Name - ID</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="attendance-table">
-                <!-- Attendance data will be populated here -->
-            </tbody>
-        </table>
-    </div>
 </body>
 </html>

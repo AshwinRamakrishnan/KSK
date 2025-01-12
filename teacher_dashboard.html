@@ -12,26 +12,22 @@
             padding: 0;
             background-color: #f5f5f5;
         }
-
         .container {
             width: 90%;
             max-width: 800px;
             margin: 50px auto;
             text-align: center;
         }
-
         h1 {
             font-size: 24px;
             margin-bottom: 30px;
         }
-
         .rectangle-container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 20px;
         }
-
         .rectangle {
             width: 150px;
             height: 120px;
@@ -47,33 +43,27 @@
             cursor: pointer;
             transition: transform 0.3s;
         }
-
         .rectangle i {
             font-size: 30px;
             margin-bottom: 10px;
         }
-
         .rectangle:hover {
             transform: scale(1.1);
         }
-
         .attendance-container {
             margin-top: 20px;
             display: none;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
-
         th, td {
             padding: 10px;
             border: 1px solid #ddd;
             text-align: center;
         }
-
         .btn {
             padding: 10px 20px;
             font-size: 14px;
@@ -83,20 +73,39 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
         .btn:hover {
             background-color: #45a049;
         }
-
         .logout {
             margin-top: 20px;
             background-color: red;
         }
+        .logout:hover {
+            background-color: darkred;
+        }
     </style>
-    <script>
-        let currentPage = "departments";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, Timestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // Example student data for each department and year
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUcPaGdOPQtsk9YqMeDWqvNKWFu7I-F_o",
+            authDomain: "test-420914.firebaseapp.com",
+            databaseURL: "https://test-420914-default-rtdb.firebaseio.com",
+            projectId: "test-420914",
+            storageBucket: "test-420914.appspot.com",
+            messagingSenderId: "551223275238",
+            appId: "1:551223275238:web:3d883e1e3ca2473d02d527",
+            measurementId: "G-S25F8L72DH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentPage = "departments";
+    
         const studentData = {
             "CSE": {
                 "1st Year": [
@@ -163,63 +172,78 @@
                 "1st Year": [
                     { id: "821023204001", name: "Kavya R" },
                     { id: "821023204002", name: "Vinoth V" }
-                    // Add more students
                 ],
                 "2nd Year": [
                     { id: "821023204001", name: "Gokul K" },
                     { id: "821023204002", name: "Shalini A" }
-                    // Add more students
                 ]
             },
             "AI & DS": {
                 "1st Year": [
                     { id: "821023305001", name: "Dinesh P" },
                     { id: "821023305002", name: "Ananya R" }
-                    // Add more students
                 ],
                 "2nd Year": [
                     { id: "821023305001", name: "Harini R" },
                     { id: "821023305002", name: "Sriram V" }
-                    // Add more students
                 ]
             },
             "AI & ML": {
                 "1st Year": [
                     { id: "821023406001", name: "Rajesh N" },
                     { id: "821023406002", name: "Vidhya K" }
-                    // Add more students
                 ],
                 "2nd Year": [
                     { id: "821023406001", name: "Krishna M" },
                     { id: "821023406002", name: "Tanya P" }
-                    // Add more students
                 ]
             }
         };
 
-        function showDepartments() {
+        // Check for teacher role before accessing the dashboard
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const uid = user.uid;
+                const userDocRef = doc(db, "users", uid);
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists() && docSnap.data().role !== 'teacher') {
+                    alert('You are not authorized to access the teacher dashboard.');
+                    window.location.href = 'login.html'; // Redirect to login if not a teacher
+                } else {
+                    showDepartments();
+                }
+            } else {
+                window.location.href = 'login.html'; // Redirect to login if not logged in
+            }
+        });
+
+        window.showDepartments = function showDepartments() {
             currentPage = "departments";
             document.getElementById("department-section").style.display = "block";
             document.getElementById("year-section").style.display = "none";
             document.getElementById("attendance-section").style.display = "none";
-        }
+        };
 
-        function loadYears(department) {
+        window.loadYears = function loadYears(department) {
             currentPage = "years";
             document.getElementById("department-section").style.display = "none";
             document.getElementById("year-section").style.display = "block";
             document.getElementById("attendance-section").style.display = "none";
+        
             document.getElementById("selected-department").innerText = department;
-        }
-
-        function loadAttendance(year, department) {
+        };
+        
+        window.loadAttendance = function loadAttendance(year) {
             currentPage = "attendance";
+            const department = document.getElementById("selected-department").innerText;
+        
             document.getElementById("department-section").style.display = "none";
             document.getElementById("year-section").style.display = "none";
             document.getElementById("attendance-section").style.display = "block";
+        
             document.getElementById("selected-year").innerText = year;
-            document.getElementById("selected-department").innerText = department;
-
+        
             const students = studentData[department][year];
             let studentRows = '';
             students.forEach((student, index) => {
@@ -232,9 +256,9 @@
                 `;
             });
             document.getElementById("student-list").innerHTML = studentRows;
-        }
+        };
 
-        function toggleAttendance(button) {
+        window.toggleAttendance = function toggleAttendance(button) {
             if (button.textContent === "Present") {
                 button.textContent = "Absent";
                 button.style.backgroundColor = "red";
@@ -242,73 +266,134 @@
                 button.textContent = "Present";
                 button.style.backgroundColor = "green";
             }
-        }
+        };
 
-        function submitAttendance() {
-            // Here, instead of alert, you should save data to Firebase Firestore
-            alert("Attendance Submitted!");
-            showDepartments();
-        }
+        window.submitAttendance = async function submitAttendance() {
+            const department = document.getElementById("selected-department").innerText;
+            const year = document.getElementById("selected-year").innerText;
+            const date = new Date().toISOString(); // Store the full date and time
+            
+            const attendance = {};
+            const rows = document.querySelectorAll('#student-list tr');
+            
+            rows.forEach((row) => {
+                const studentId = row.cells[1].innerText.split(" - ")[1];
+                const status = row.cells[2].querySelector("button").textContent;
+                attendance[studentId] = {
+                    status: status
+                };
+            });
 
-        function logout() {
-            alert("Logged Out!");
-            showDepartments();
-        }
+            try {
+                await setDoc(doc(db, "attendance", department, year, date), {
+                    attendance: attendance,
+                    date: Timestamp.fromDate(new Date())
+                });
+                alert("Attendance Submitted!");
+                showDepartments();
+            } catch (error) {
+                console.error("Error submitting attendance:", error);
+                alert("There was an error submitting the attendance.");
+            }
+        };
+
+        window.logout = function logout() {
+            signOut(auth).then(() => {
+                alert("Logged Out!");
+                window.location.href = 'login.html'; // Redirect to login page
+            }).catch((error) => {
+                console.error("Error logging out:", error);
+            });
+        };
+
+
+
+        window.submitAttendance = async function submitAttendance() {
+            const department = document.getElementById("selected-department").innerText;
+            const year = document.getElementById("selected-year").innerText;
+            const date = new Date().toISOString().split('T')[0];  // Format date as YYYY-MM-DD
+            
+            const attendance = {};
+            const rows = document.querySelectorAll('#student-list tr');
+            
+            rows.forEach((row) => {
+                const studentId = row.cells[1].innerText.split(" - ")[1];
+                const studentName = row.cells[1].innerText.split(" - ")[0];
+                const status = row.cells[2].querySelector("button").textContent;
+                attendance[studentId] = {
+                    name: studentName,  // Store student name
+                    status: status,
+                    studentId: studentId
+                };
+            });
+        
+            try {
+                const departmentRef = doc(db, "attendance", department, year, date);
+                
+                // Set attendance data in the Firestore document in the requested format
+                await setDoc(departmentRef, {
+                    [date]: attendance
+                }, { merge: true });  // Use merge to avoid overwriting existing data
+                
+                alert("Attendance Submitted!");
+                showDepartments();
+            } catch (error) {
+                console.error("Error submitting attendance:", error);
+                alert("There was an error submitting the attendance. Check the console for details.");
+            }
+        };
+        
     </script>
 </head>
-<body onload="showDepartments()">
+<body>
     <div class="container">
         <h1>Teacher Dashboard</h1>
 
-        <!-- Department Section -->
         <div id="department-section">
             <h2>Select Department</h2>
             <div class="rectangle-container">
-                <div class="rectangle" onclick="loadYears('CSE')">
+                <button class="rectangle" onclick="loadYears('CSE')">
                     <i class="fas fa-laptop-code"></i>
                     CSE
-                </div>
-                <div class="rectangle" onclick="loadYears('ECE')">
+                </button>
+                <button class="rectangle" onclick="loadYears('ECE')">
                     <i class="fas fa-microchip"></i>
                     ECE
-                </div>
-                <div class="rectangle" onclick="loadYears('AI & DS')">
+                </button>
+                <button class="rectangle" onclick="loadYears('AI & DS')">
                     <i class="fas fa-brain"></i>
                     AI & DS
-                </div>
-                <div class="rectangle" onclick="loadYears('AI & ML')">
+                </button>
+                <button class="rectangle" onclick="loadYears('AI & ML')">
                     <i class="fas fa-robot"></i>
                     AI & ML
-                </div>
+                </button>
             </div>
         </div>
 
-        <!-- Year Section -->
         <div id="year-section" style="display: none;">
             <h2>Department: <span id="selected-department"></span></h2>
             <h3>Select Year</h3>
             <div class="rectangle-container">
-                <div class="rectangle" onclick="loadAttendance('1st Year', document.getElementById('selected-department').innerText)">1st Year</div>
-                <div class="rectangle" onclick="loadAttendance('2nd Year', document.getElementById('selected-department').innerText)">2nd Year</div>
+                <button class="rectangle" onclick="loadAttendance('1st Year')">1st Year</button>
+                <button class="rectangle" onclick="loadAttendance('2nd Year')">2nd Year</button>
             </div>
         </div>
 
-        <!-- Attendance Section -->
         <div id="attendance-section" style="display: none;">
-            <h2>Department: <span id="selected-department"></span> | Year: <span id="selected-year"></span></h2>
+            <h2>Department: <span id="selected-department"></span></h2>
+            <h3>Year: <span id="selected-year"></span></h3>
             <table>
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Student Name - ID</th>
-                        <th>Attendance</th>
+                        <th>Student Name</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="student-list">
-                    <!-- Student rows will be populated here dynamically -->
-                </tbody>
+                <tbody id="student-list"></tbody>
             </table>
-            <button class="btn" onclick="submitAttendance()">Submit</button>
+            <button class="btn" onclick="submitAttendance()">Submit Attendance</button>
             <button class="btn logout" onclick="logout()">Logout</button>
         </div>
     </div>

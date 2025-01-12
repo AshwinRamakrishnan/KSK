@@ -9,6 +9,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDUcPaGdOPQtsk9YqMeDWqvNKWFu7I-F_o",
             authDomain: "test-420914.firebaseapp.com",
@@ -20,33 +21,46 @@
             measurementId: "G-S25F8L72DH"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Login function
+        // Usernames mapped to emails
+        const users = {
+            "principal": "ashwinkalai2k@gmail.com", // Principal's username
+            "teacher": "ashwinkalai60@gmail.com"   // Teacher's username
+        };
+
+        // Login form handler
         const loginForm = document.getElementById("login-form");
         loginForm.addEventListener("submit", (event) => {
             event.preventDefault();
-            const email = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
 
+            const username = document.getElementById("username").value; // Get username
+            const password = document.getElementById("password").value; // Get password
+
+            // Match username to email
+            const email = users[username];
+            if (!email) {
+                alert("Invalid username! Please try again.");
+                return;
+            }
+
+            // Authenticate with Firebase
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     alert("Login successful!");
-                    // Redirect based on user role (teacher or principal)
                     const user = userCredential.user;
-                    // Check email and redirect to corresponding dashboard
-                    if (user.email === "ashwinkalai2k@gmail.com") {
-                        window.location.href = 'principal_dashboard.html';  // Principal Dashboard
-                    } else if (user.email === "ashwinkalai60@gmail.com") {
-                        window.location.href = 'teacher_dashboard.html';    // Teacher Dashboard
-                    } else {
-                        alert("User does not have access.");
+
+                    // Redirect based on role
+                    if (username === "principal") {
+                        window.location.href = 'principal_dashboard.html'; // Redirect to Principal Dashboard
+                    } else if (username === "teacher") {
+                        window.location.href = 'teacher_dashboard.html';   // Redirect to Teacher Dashboard
                     }
                 })
                 .catch((error) => {
-                    const errorMessage = error.message;
-                    alert("Login failed: " + errorMessage);
+                    alert("Login failed: " + error.message);
                 });
         });
     </script>
@@ -55,10 +69,10 @@
     <div class="login-form">
         <h2>Login</h2>
         <form id="login-form">
-            <label for="username">Email</label>
-            <input type="email" id="username" name="username" required>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required placeholder="Enter your username">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" required placeholder="Enter your password">
             <button type="submit">Login</button>
         </form>
     </div>
